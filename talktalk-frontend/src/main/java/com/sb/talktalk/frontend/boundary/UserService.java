@@ -16,26 +16,24 @@ public class UserService {
     @Autowired
     ReactRestClient restClient;
 
-
-
     public Mono<User> getUser() {
-        return restClient.getForSingleObject("user/get-user", User.class);
+        return restClient.getForSingleObject("user/", User.class);
     }
 
     public Flux<User> getAllUsers() {
-        return restClient.getForObject("user/get-all", User.class);
+        return restClient.getForObject("user/", User.class);
     }
 
     public Flux<User> getAllUsersAsEvent() {
-        return restClient.getForObject("user/get-all-event", User.class);
+        return restClient.getForObject("user/event", User.class);
     }
 
     public Mono<User> addUser(final User user) {
-        return restClient.postObject("user/add-user", Mono.just(user), User.class);
+        return restClient.postObject("user/", Mono.just(user), User.class);
     }
 
     public Mono<Boolean> deleteUserBySessionID(final String sessionID) {
-        return restClient.deleteObject("user/delete-by-session-id/{sessionID}", sessionID);
+        return restClient.deleteObject("user/by-session-id/{sessionID}", sessionID);
     }
 
     public Flux<UserState> getUserLastUpdate() {

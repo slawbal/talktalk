@@ -18,6 +18,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.springframework.http.ResponseEntity.notFound;
+import static org.springframework.http.ResponseEntity.ok;
+
+
 @RestController
 @RequestScope
 @RequestMapping("/user")
@@ -31,37 +35,37 @@ public class UserController {
     @Autowired
     UserLastUpdate lastUpdate;
 
-    @GetMapping(value = "/get-user/{id}")
-    public Mono<User> getUser(@PathVariable("id") String id) {
-        return repository.findById(id);
+    @GetMapping(value = "/{id}")
+    public Mono<ResponseEntity<User>> getUser(@PathVariable("id") String id) {
+        return repository.findById(id)
+                .map(e -> ok().body(e))
+                .defaultIfEmpty(notFound().build());
     }
 
-    @GetMapping(value = "/add-dummy")
-    public void addDummyUser() {
-        repository.save(new User("Johnny", "Cage")).subscribe(u -> lastUpdate.update());
-    }
-
-    @GetMapping(value = "/get-all-event", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(value = "/event", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<User> getAllEvent() {
-        return Flux.zip(repository.findAll(), Flux.interval(Duration.ofSeconds(1L))).map(Tuple2::getT1).repeat();
+        return Flux.zip(repository.findAll(), Flux.interval(Duration.ofSeconds(1L)))
+                .map(Tuple2::getT1).repeat();
     }
 
-    @GetMapping(value = "/get-all")
+    @GetMapping
     public Flux<User> getAll() {
         return repository.findAll();
     }
 
     @GetMapping(value = "/get-last-update", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<UserState> getLastUpdate() {
-        return Flux.zip(lastUpdate.getLastUpdate(), Flux.interval(Duration.ofSeconds(1L))).map(Tuple2::getT1).repeat();
+        return Flux.zip(lastUpdate.getLastUpdate(), Flux.interval(Duration.ofSeconds(1L)))
+                .map(Tuple2::getT1).repeat();
     }
 
-    @PostMapping("/add-user")
+    @PostMapping
     public void addUser(@RequestBody User user) {
         repository.save(user).subscribe(u -> lastUpdate.update());
 
     }
-    @DeleteMapping ("/delete-by-session-id/{sessionID}")
+
+    @DeleteMapping("/by-session-id/{sessionID}")
     public ResponseEntity<Boolean> deleteUser(@PathVariable String sessionID) {
         Flux<User> users = repository.findBySessionID(Mono.just(sessionID));
         repository.deleteAll(users).doOnSuccess(u -> lastUpdate.update()).subscribe();

@@ -1,6 +1,8 @@
 package com.sb.talktalk.frontend.components.countries;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -32,13 +34,17 @@ public class CountriesLoader {
         return countries;
     }
 
-    private static Path getFile() {
-        return Paths.get(getFilePath());
+    private static Path getFile() throws IOException {
+        try {
+            return Paths.get(getFilePath());
+        } catch (URISyntaxException e) {
+            throw new IOException(e);
+        }
     }
 
-    private static String getFilePath() {
+    private static URI getFilePath() throws URISyntaxException {
         final ClassLoader classLoader = CountriesLoader.class.getClassLoader();
-        return classLoader.getResource("countries.txt").getFile();
+        return classLoader.getResource("countries.txt").toURI();
     }
 
     private static void addNewEntry(final String line) {
